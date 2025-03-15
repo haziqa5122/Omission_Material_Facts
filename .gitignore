@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and databases
+logs/
+*.log
+db.sqlite3
+
+# Python package files
+*.egg-info/
+dist/
+build/
+
+# Data and model files
+data/
+*.csv
+*.json
+*.pdf
+*.pkl
+*.h5
+*.onnx
+
+# Large files and cache
+.cache/
+*.tar.gz
+*.zip
+
+# VS Code and other IDE settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
