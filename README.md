@@ -4,9 +4,6 @@
 1. **Identifying Omissions**: We prompted an LLM using structured categories (e.g., side effects, interactions) to identify possible omissions in the post, minimizing hallucinations.  
 2. **Cross-Referencing**: Observastions were validated by performing a similarity search against relevant sections in a PDF about the drug discussed. If an observation is matched with a document a review will be formed as shown:
 
-![Results](1.png)
-
-
 #### Tools  
 - **LLM**: (e.g., OpenAI GPT)  
 - **Similarity Search**: (e.g., ApertureDB)  
