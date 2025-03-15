@@ -1,0 +1,7 @@
+embedding_model: "abhinand/MedEmbed-base-v0.1"
+db_host: "knowledge-graph-226nqp47.farm0000.cloud.aperturedata.io"
+db_user: "admin"
+db_password: "a$appleb4bus"
+collection_name: "omission_db_v2"
+marketing_doc : "data/KimKardashianAd.png"
+clinical_doc: "data/DiclegisClinicalInformation.pdf"

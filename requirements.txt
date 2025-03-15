@@ -1,0 +1,8 @@
+easyocr
+pyyaml
+textblob
+python-dotenv
+unstructured[pdf]
+aperturedb
+sentence_transformers
+PyMuPDF
