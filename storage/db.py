@@ -1,5 +1,6 @@
 from aperturedb import Connector
 import numpy as np
+from nomic import embed
 
 class VectorStore:
     def __init__(self, host: str, user: str, password: str):
@@ -111,3 +112,47 @@ class VectorStore:
         
         response, _ = self.client.query(q, image_blob)
         return response
+
+    def add_image_with_embedding(self, image_path: str, metadata: dict):
+        """
+        Adds an image to ApertureDB, generates its embedding with nomic,
+        and stores both image + embedding into the database.
+
+        :param image_path: Path to the image file.
+        :param metadata: Dictionary containing metadata for the image.
+                        Must include a unique "id".
+        """
+        if self.descriptorset_name is None:
+            raise ValueError("Descriptor set is not set. Use 'set_collection' first.")
+
+        with open(image_path, "rb") as fd:
+            image_blob = [fd.read()]
+
+        q_img = [{
+            "AddImage": {
+                "properties": metadata,
+                "if_not_found": {"id": ["==", metadata["id"]]}
+            }
+        }]
+        self.client.query(q_img, image_blob)
+
+        # --- Step 2: Generate embedding with nomic ---
+        output = embed.image(
+            images=[image_path],
+            model="nomic-embed-vision-v1.5",
+        )
+        embedding = np.array(output["embeddings"][0], dtype="float32")
+        embedding_bytes = embedding.tobytes()
+
+        # --- Step 3: Add descriptor (embedding) ---
+        q_desc = [{
+            "AddDescriptor": {
+                "set": self.descriptorset_name,
+                "label": metadata.get("label", "image"),
+                "properties": {"id": metadata["id"], **metadata},
+                "if_not_found": {"id": ["==", metadata["id"]]}
+            }
+        }]
+        self.client.query(q_desc, [embedding_bytes])
+
+        return {"image_added": True, "embedding_shape": embedding.shape}
