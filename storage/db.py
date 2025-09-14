@@ -69,29 +69,58 @@ class VectorStore:
         
         self.client.query(queries, blobs)
 
-    def query_embeddings(self, query_embedding: np.ndarray, top_k: int = 5):
+    def query_embeddings(self, query_embedding: np.ndarray, top_k: int = 5, return_images: bool = True):
         """
         Queries the ApertureDB for similar embeddings.
+        If results are images and `return_images=True`, also fetch the image blobs.
 
         :param query_embedding: The query embedding to search for similar items.
         :param top_k: Number of similar embeddings to return.
-        :return: List of matching IDs and metadata.
+        :param return_images: Whether to fetch actual images for image descriptors.
+        :return: List of results with id, label, metadata, score, and optional image blob.
         """
         if self.descriptorset_name is None:
             raise ValueError("Descriptor set is not set. Use 'set_collection' first.")
 
-        embedding_bytes = query_embedding.astype('float32').tobytes()
-        
+        embedding_bytes = query_embedding.astype("float32").tobytes()
+
         q = [{
             "FindDescriptor": {
                 "set": self.descriptorset_name,
                 "k": top_k,
-                "return": ["id", "label", "properties"]
+                "return": ["id", "label", "properties", "score"]
             }
         }]
-        
+
         responses, _ = self.client.query(q, [embedding_bytes])
-        return responses
+        descriptors = responses[0]["FindDescriptor"]["descriptors"]
+
+        results = []
+        for d in descriptors:
+            result = {
+                "id": d["properties"]["id"],
+                "label": d["label"],
+                "metadata": d["properties"],
+                "score": d.get("score")
+            }
+
+            # If this is an image descriptor and we want blobs, fetch the image
+            if d["label"] == "image" and return_images:
+                q_img = [{
+                    "FindImage": {
+                        "constraints": {"id": ["==", d["properties"]["id"]]},
+                        "blobs": True,
+                        "results": {"limit": 1}
+                    }
+                }]
+                resp, blobs = self.client.query(q_img)
+                if blobs:
+                    result["image_blob"] = blobs[0]
+
+            results.append(result)
+
+        return results
+
     
     def add_image(self, image_path: str, metadata: dict):
         """
@@ -136,7 +165,6 @@ class VectorStore:
         }]
         self.client.query(q_img, image_blob)
 
-        # --- Step 2: Generate embedding with nomic ---
         output = embed.image(
             images=[image_path],
             model="nomic-embed-vision-v1.5",
@@ -144,7 +172,6 @@ class VectorStore:
         embedding = np.array(output["embeddings"][0], dtype="float32")
         embedding_bytes = embedding.tobytes()
 
-        # --- Step 3: Add descriptor (embedding) ---
         q_desc = [{
             "AddDescriptor": {
                 "set": self.descriptorset_name,
