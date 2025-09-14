@@ -76,9 +76,12 @@ if __name__ == "__main__":
 
         if data["image"]:
             image_metadata = {
-                "id": data["image"]["id"],
+                "id": data["image"]["id"],  # unique ID
                 "page": data["image"]["page"]
             }
-            vector_store.add_image(data["image"]["filename"], image_metadata)
+            vector_store.add_image_with_embedding(
+                data["image"]["filename"],
+                image_metadata
+            )
 
     vector_store.ingest_embeddings(np.array(embeddings), ids, metadatas)
