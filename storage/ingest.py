@@ -26,13 +26,6 @@ if __name__ == "__main__":
 
     # Extract tables
     tables = [el for el in clinical_doc_elements if el.category == "Table"]
-    
-    print(f"Total Tables Found: {len(tables)}")
-    if tables:
-        print(f"Table Text: {tables[0].text}")
-        print(f"Table Metadata: {tables[0].metadata.page_number}")
-    if chunks:
-        print(f"Chunk Metadata: {chunks[0].metadata.page_number}")
 
     # Organize and ingest data
     page_data = {}
@@ -97,4 +90,4 @@ if __name__ == "__main__":
                 "image": data["image"]["filename"]
             })
 
-    print(vector_store.ingest_embeddings(embeddings, ids, metadatas))
+    vector_store.ingest_embeddings(embeddings, ids, metadatas)
