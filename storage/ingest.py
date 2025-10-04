@@ -2,7 +2,7 @@ from extras.constants import CONFIG_PATH
 from preprocessor.extract import Processor
 from extras.utils import read_yaml, extract_images
 from unstructured.chunking.title import chunk_by_title
-from embedder.embeddings import get_embeddings
+from embedder.multimodal_embedding import get_multimodal_embedding
 from storage.db import VectorStore
 import numpy as np
 
@@ -11,11 +11,9 @@ if __name__ == "__main__":
 
     # Initialize VectorStore (ApertureDB)
     vector_store = VectorStore(
-        host=config.get("db_host"),
-        user=config.get("db_user"),
-        password=config.get("db_password")
+        collection_name=config.get("collection_name"),
     )
-    vector_store.set_collection(config.get("collection_name"))
+    vector_store.set_collection(dimensions=512)
 
     # Extract document elements
     pdf_path = config.get("clinical_doc")
@@ -23,7 +21,7 @@ if __name__ == "__main__":
     processor = Processor()
     clinical_doc_elements = processor.extract(document=pdf_path)
 
-    # Chunking document by title
+    # Chunking    document by title
     chunks = chunk_by_title(clinical_doc_elements)
 
     # Extract tables
@@ -31,6 +29,7 @@ if __name__ == "__main__":
     
     print(f"Total Tables Found: {len(tables)}")
     if tables:
+        print(f"Table Text: {tables[0].text}")
         print(f"Table Metadata: {tables[0].metadata.page_number}")
     if chunks:
         print(f"Chunk Metadata: {chunks[0].metadata.page_number}")
@@ -65,23 +64,37 @@ if __name__ == "__main__":
     embeddings, ids, metadatas = [], [], []
 
     for page_number, data in page_data.items():
+    # Combine all textual info
         combined_text = "\n".join(data["text"])
-        embedding = get_embeddings(combined_text)
-        embeddings.append(embedding)
-        ids.append(str(page_number))
-        metadatas.append({"text": combined_text, "page_number": page_number})
+        if combined_text.strip():
+            emb = get_multimodal_embedding(combined_text, is_image=False)
+            embeddings.append(emb)
+            ids.append(f"text_page_{page_number}")
+            metadatas.append({
+                "type": "text",
+                "page_number": page_number,
+                "text": combined_text
+            })
 
         if data["table"]:
-            metadatas[-1]["table"] = data["table"].text
+            table_text = data["table"].text
+            emb = get_multimodal_embedding(table_text, is_image=False)
+            embeddings.append(emb)
+            ids.append(f"table_page_{page_number}")
+            metadatas.append({
+                "type": "table",
+                "page_number": page_number,
+                "table": table_text
+            })
 
         if data["image"]:
-            image_metadata = {
-                "id": data["image"]["id"],  # unique ID
-                "page": data["image"]["page"]
-            }
-            vector_store.add_image_with_embedding(
-                data["image"]["filename"],
-                image_metadata
-            )
+            emb = get_multimodal_embedding(data["image"]["filename"], is_image=True)
+            embeddings.append(emb)
+            ids.append(data["image"]["id"])
+            metadatas.append({
+                "type": "image",
+                "page_number": page_number,
+                "image": data["image"]["filename"]
+            })
 
-    vector_store.ingest_embeddings(np.array(embeddings), ids, metadatas)
+    print(vector_store.ingest_embeddings(embeddings, ids, metadatas))

@@ -1,7 +1,4 @@
-embedding_model: "<EMBEDDING_MODEL>"
-db_host: "<DB_HOST>"
-db_user: <DB_USER>
-db_password: "<DB_PASSWORD>"
-collection_name: "<COLLECTION_NAME>"
-marketing_doc : "<MARKETING_DOC>"
-clinical_doc: "<CLINICAL_DOC>"
+multimodal_embedding_model: "clip-ViT-B-32"
+collection_name: "Diclegis_v2"
+marketing_doc : "data/marketing.png"
+clinical_doc: "data/info.pdf"

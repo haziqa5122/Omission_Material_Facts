@@ -6,3 +6,4 @@ unstructured[pdf]
 aperturedb
 sentence_transformers
 PyMuPDF
+pdfplumber
