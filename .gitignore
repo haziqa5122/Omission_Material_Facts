@@ -22,7 +22,6 @@ dist/
 build/
 
 # Data and model files
-data/
 *.csv
 *.json
 *.pdf

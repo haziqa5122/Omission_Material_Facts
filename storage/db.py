@@ -2,7 +2,9 @@ from aperturedb import Connector
 import numpy as np
 from nomic import embed
 from aperturedb.CommonLibrary import create_connector
+from dotenv import load_dotenv
 
+load_dotenv()
 class VectorStore:
     def __init__(self, collection_name: str):
         """
@@ -12,7 +14,7 @@ class VectorStore:
         :param user: Username for authentication.
         :param password: Password for authentication.
         """
-        self.client = create_connector(key = "WzEsMSwibWVkaWNhbC11bmljb3JuLXZkZDI2ejk1LmZhcm0wMDA0LmNsb3VkLmFwZXJ0dXJlZGF0YS5pbyIsInBxeG1DelNORTBzV3lDRjZIbWhjTUJTbWZCUTh2WkZkNGtaIl0=")
+        self.client = create_connector(key = os.getenv("APERTUREDB_API_KEY"))
         self.client.query([{"GetStatus": {}}])  # Verify connection
         self.descriptorset_name = collection_name
 
